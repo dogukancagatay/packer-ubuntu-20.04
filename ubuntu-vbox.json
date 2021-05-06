@@ -1,95 +1,101 @@
 {
-    "_comment": "Build with `packer build ubuntu.json`",
-    "variables": {
-        "hostname": "ubuntu",
-        "ssh_username": "ubuntu",
-        "ssh_password": "ubuntu",
+  "_comment": "Build with `packer build ubuntu.json`",
+  "variables": {
+    "hostname": "ubuntu",
+    "ssh_username": "ubuntu",
+    "ssh_password": "ubuntu",
 
-        "version": "0.1",
-        "vm_name": "ubuntu-server-20.04.2"
+    "ram": "1024",
+    "cpu": "1",
+    "disk_size": "20000",
+
+    "version": "0.1",
+    "vm_name": "ubuntu-server-20.04.2"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "output_directory": "output-{{user `vm_name`}}-vbox-iso",
+
+      "iso_urls": [
+        "iso/ubuntu-20.04.2-live-server-amd64.iso",
+        "http://releases.ubuntu.com/20.04.2/ubuntu-20.04.2-live-server-amd64.iso"
+      ],
+      "iso_checksum": "file:http://releases.ubuntu.com/20.04.2/SHA256SUMS",
+
+      "vboxmanage": [
+        [ "modifyvm", "{{.Name}}", "--audio", "none" ],
+        [ "modifyvm", "{{.Name}}", "--usb", "off" ],
+        [ "modifyvm", "{{.Name}}", "--vram", "12" ],
+        [ "modifyvm", "{{.Name}}", "--vrde", "off" ],
+        [ "modifyvm", "{{.Name}}", "--nictype1", "virtio" ],
+        [ "modifyvm", "{{.Name}}", "--memory", "{{user `ram`}}" ],
+        [ "modifyvm", "{{.Name}}", "--cpus", "{{user `cpu`}}" ]
+      ],
+
+      "vm_name": "{{user `vm_name`}}",
+      "disk_size": "{{user `disk_size`}}",
+      "headless": "true",
+
+      "boot_wait": "5s",
+      "boot_command": [
+        "<enter><enter><f6><esc><wait> ",
+        "autoinstall ds=nocloud-net;seedfrom=http://{{ .HTTPIP }}:{{ .HTTPPort }}/",
+        "<enter><wait>"
+      ],
+
+      "http_directory": "http",
+      "ssh_username": "{{user `ssh_username`}}",
+      "ssh_password": "{{user `ssh_password`}}",
+      "ssh_timeout": "4h",
+
+      "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S shutdown -P now",
+
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "virtualbox_version_file": ".vbox_version",
+      "hard_drive_interface": "sata",
+      "guest_os_type": "Ubuntu_64"
+    }
+  ],
+  "provisioners": [
+    {
+      "environment_vars": [
+        "DEBIAN_FRONTEND=noninteractive",
+        "UPDATE=true",
+        "SSH_USERNAME={{user `ssh_username`}}",
+        "SSH_PASSWORD={{user `ssh_password`}}"
+      ],
+      "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
+      "scripts": [
+        "script/update.sh",
+        "script/virtualbox.sh",
+        "script/minimize.sh"
+      ],
+      "type": "shell"
     },
-    "builders": [{
-        "type": "virtualbox-iso",
-        "guest_os_type": "Ubuntu_64",
-        "output_directory": "output-{{user `vm_name`}}-vbox-iso",
-
-        "iso_urls": [
-            "iso/ubuntu-20.04.2-live-server-amd64.iso",
-            "http://releases.ubuntu.com/20.04.2/ubuntu-20.04.2-live-server-amd64.iso"
-        ],
-        "iso_checksum": "file:http://releases.ubuntu.com/20.04.2/SHA256SUMS",
-
-        "vboxmanage": [
-            ["modifyvm", "{{.Name}}", "--audio", "none"],
-            ["modifyvm", "{{.Name}}", "--usb", "off"],
-            ["modifyvm", "{{.Name}}", "--vram", "12"],
-            ["modifyvm", "{{.Name}}", "--vrde", "off"],
-            ["modifyvm", "{{.Name}}", "--nictype1", "virtio"],
-            ["modifyvm", "{{.Name}}", "--memory", "1024"],
-            ["modifyvm", "{{.Name}}", "--cpus", "1"]
-        ],
-
-        "virtualbox_version_file": ".vbox_version",
-        "vm_name": "{{user `vm_name`}}",
-        "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
-        "disk_size": "20000",
-        "hard_drive_interface": "sata",
-        "headless": "true",
-
-        "boot_command": [
-            "<enter><enter><f6><esc><wait> ",
-            "autoinstall ds=nocloud-net;seedfrom=http://{{ .HTTPIP }}:{{ .HTTPPort }}/",
-            "<enter><wait>"
-        ],
-
-        "boot_wait": "5s",
-        "http_directory": "http",
-
-        "ssh_username": "{{user `ssh_username`}}",
-        "ssh_password": "{{user `ssh_password`}}",
-        "ssh_timeout": "4h",
-
-        "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S shutdown -P now"
-    }],
-    "provisioners": [
-      {
-        "environment_vars": [
-          "DEBIAN_FRONTEND=noninteractive",
-          "UPDATE=true",
-          "SSH_USERNAME={{user `ssh_username`}}",
-          "SSH_PASSWORD={{user `ssh_password`}}"
-        ],
-        "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
-        "scripts": [
-          "script/update.sh",
-          "script/virtualbox.sh",
-          "script/minimize.sh"
-        ],
-        "type": "shell"
-      },
-      {
-        "type": "ansible",
-        "playbook_file": "./ansible/playbook.yml",
-        "user": "{{user `ssh_username`}}",
-        "ansible_env_vars": [
-          "ANSIBLE_HOST_KEY_CHECKING=False",
-          "ANSIBLE_SSH_ARGS='-o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes'",
-          "ANSIBLE_NOCOWS=1"
-        ],
-        "keep_inventory_file": true,
-        "inventory_file_template": "{{ .HostAlias }} ansible_host={{ .Host }} ansible_user={{ .User }} ansible_port={{ .Port }} ansible_become_pass={{user `ssh_password`}}\n"
-      },
-      {
-        "environment_vars": [
-          "DEBIAN_FRONTEND=noninteractive",
-          "SSH_USERNAME={{user `ssh_username`}}",
-          "SSH_PASSWORD={{user `ssh_password`}}"
-        ],
-        "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
-        "scripts": [
-          "script/cleanup.sh"
-        ],
-        "type": "shell"
-      }
-    ]
+    {
+      "type": "ansible",
+      "playbook_file": "./ansible/playbook.yml",
+      "user": "{{user `ssh_username`}}",
+      "ansible_env_vars": [
+        "ANSIBLE_HOST_KEY_CHECKING=False",
+        "ANSIBLE_SSH_ARGS='-o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes'",
+        "ANSIBLE_NOCOWS=1"
+      ],
+      "keep_inventory_file": true,
+      "inventory_file_template": "{{ .HostAlias }} ansible_host={{ .Host }} ansible_user={{ .User }} ansible_port={{ .Port }} ansible_become_pass={{user `ssh_password`}}\n"
+    },
+    {
+      "environment_vars": [
+        "DEBIAN_FRONTEND=noninteractive",
+        "SSH_USERNAME={{user `ssh_username`}}",
+        "SSH_PASSWORD={{user `ssh_password`}}"
+      ],
+      "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
+      "scripts": [
+        "script/cleanup.sh"
+      ],
+      "type": "shell"
+    }
+  ]
 }
