@@ -18,6 +18,12 @@ To create VirtualBox virtual machine.
 packer build -on-error=ask ubuntu-vbox.json
 ```
 
+To create KVM virtual machine.
+
+```bash
+packer build -on-error=ask ubuntu-qemu.json
+```
+
 To create Hyper-V virtual machine. (Not updated probably won't work)
 
 ```sh
