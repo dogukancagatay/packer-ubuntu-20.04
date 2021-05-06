@@ -8,7 +8,7 @@ docker_install_version: latest # works only for Ubuntu and Debian
 # docker_insecure_registries:
 #   - hostname.example.com:5000
 
-river_json_file: true
+docker_log_driver_json_file: true
 docker_log_file_max_size: 50m
 docker_log_file_max_num: 10
 
