@@ -1,0 +1,30 @@
+---
+- name: Install common packages (CentOS)
+  package:
+    state: present
+    update_cache: yes
+    name:
+      - vim
+      - curl
+      - wget
+      - net-tools
+      - cifs-utils
+      - nfs-utils
+      - git
+      - tmux
+      - zip
+  when: ansible_distribution == "CentOS"
+
+- name: Install common packages (Ubuntu/Debian)
+  package:
+    state: present
+    update_cache: yes
+    name:
+      - vim-nox
+      - curl
+      - wget
+      - git
+      - zip
+      - htop
+      - net-tools
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"

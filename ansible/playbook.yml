@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+  gather_facts: yes
+  roles:
+    - setup-timedatectl
+    - upgrade-packages
+    # - reboot
+    - install-common-packages
+    - install-docker

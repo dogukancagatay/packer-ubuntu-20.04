@@ -1,0 +1,96 @@
+---
+- name: Remove previous docker installation
+  package:
+    state: absent
+    name:
+      - docker
+      - docker-client
+      - docker-client-latest
+      - docker-common
+      - docker-latest
+      - docker-latest-logrotate
+      - docker-logrotate
+      - docker-selinux
+      - docker-engine-selinux
+      - docker-engine
+  when: ansible_distribution == "CentOS"
+
+- name: Import Docker CE repository gpg key
+  rpm_key:
+    key: "https://download.docker.com/linux/centos/gpg"
+    state: present
+  when: ansible_distribution == "CentOS"
+
+- name: Add Docker CE Repository (Centos 8)
+  shell: "dnf config-manager --add-repo={{ docker_install_centos_repo_url }}"
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "8"
+
+- name: Add Docker CE repository
+  get_url:
+    url: "{{ docker_install_centos_repo_url }}"
+    dest: /etc/yum.repos.d/docker-ce.repo
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: Install required packages for device-mapper storage driver
+  package:
+    state: latest
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+  when: ansible_distribution == "CentOS"
+
+- name: Install docker-ce (Centos 7)
+  package:
+    state: latest
+    update_cache: yes
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: Install containerd.io from docker repository (Centos 8)
+  package:
+    state: latest
+    name: "{{ docker_install_centos_containerdio_url }}"
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "8"
+
+- name: Install docker-ce (Centos 8)
+  package:
+    state: latest
+    name: docker-ce
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "8"
+
+- name: Start and enable docker daemon
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Install epel-release for docker-compose
+  package:
+    state: present
+    name: epel-release
+
+- name: Install pip for docker-compose
+  package:
+    state: latest
+    name: python3-pip
+
+- name: Install docker-compose from pip
+  shell: pip3 install -U docker-compose
+
+- name: Setup /etc/docker/daemon.json file
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+
+- name: Restart docker
+  systemd:
+    name: docker
+    state: restarted

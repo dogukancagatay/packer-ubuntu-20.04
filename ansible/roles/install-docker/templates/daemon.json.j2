@@ -1,0 +1,30 @@
+{
+{% if docker_use_overlay2 is undefined or docker_use_overlay2 %}
+  "storage-driver": "overlay2"{{ "," if docker_registry_mirrors is defined or docker_insecure_registries is defined or docker_log_driver_json_file is defined else "" }}
+{% endif %}
+
+{% if docker_registry_mirrors is defined %}
+  "registry-mirrors": [
+  {% for mirrorserver in docker_registry_mirrors %}
+    "{{ mirrorserver }}"{{ "," if not loop.last else "" }}
+  {% endfor %}
+  ]{{ "," if docker_insecure_registries is defined or docker_log_driver_json_file is defined else "" }}
+{% endif %}
+
+{% if docker_insecure_registries is defined %}
+  "registry-mirrors": [
+  {% for insecure_registry in docker_insecure_registries %}
+    "{{ insecure_registry }}"{{ "," if not loop.last else "" }}
+  {% endfor %}
+  ]{{ "," if docker_log_driver_json_file is defined else "" }}
+{% endif %}
+
+{% if docker_log_driver_json_file is defined %}
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "{{ docker_log_file_max_size if docker_log_file_max_size is defined else "50m" }}",
+    "max-file": "{{ docker_log_file_max_num if docker_log_file_max_num is defined else "10" }}"
+  }
+{% endif %}
+
+}

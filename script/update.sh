@@ -2,9 +2,9 @@
 
 echo "==> Disabling apt.daily.service & apt-daily-upgrade.service"
 systemctl stop apt-daily.timer apt-daily-upgrade.timer
-systemctl mask apt-daily.timer apt-daily-upgrade.timer
+systemctl disable apt-daily.timer apt-daily-upgrade.timer
 systemctl stop apt-daily.service apt-daily-upgrade.service
-systemctl mask apt-daily.service apt-daily-upgrade.service
+systemctl disable apt-daily.service apt-daily-upgrade.service
 systemctl daemon-reload
 
 echo "==> Updating list of repositories"
@@ -13,8 +13,6 @@ if [[ $UPDATE =~ true || $UPDATE =~ 1 ]]; then
     echo "==> Upgrading packages"
     apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 fi
-apt-get -y install --no-install-recommends build-essential linux-headers-generic
-apt-get -y install --no-install-recommends ssh nfs-common curl git vim
 
 echo "==> Removing the release upgrader"
 apt-get -y purge ubuntu-release-upgrader-core
@@ -42,8 +40,8 @@ update-grub
 echo "UseDNS no" >> /etc/ssh/sshd_config
 echo "GSSAPIAuthentication no" >> /etc/ssh/sshd_config
 
-echo "====> Shutting down the SSHD service and rebooting..."
-systemctl stop sshd.service
-nohup shutdown -r now < /dev/null > /dev/null 2>&1 &
-sleep 120
-exit 0
+# echo "====> Shutting down the SSHD service and rebooting..."
+# systemctl stop sshd.service
+# nohup shutdown -r now < /dev/null > /dev/null 2>&1 &
+# sleep 120
+# exit 0

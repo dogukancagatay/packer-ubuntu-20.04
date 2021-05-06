@@ -1,0 +1,15 @@
+---
+timedatectl_timeservers:
+  - 0.europe.pool.ntp.org
+  - 1.europe.pool.ntp.org
+  - 2.europe.pool.ntp.org
+  - 3.europe.pool.ntp.org
+timedatectl_timeservers_fallback:
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+  - 2.pool.ntp.org
+  - 3.pool.ntp.org
+timedatectl_timezone: Etc/UTC
+# timedatectl_root_distance_max_sec: 5
+# timedatectl_poll_interval_min_sec: 32
+# timedatectl_poll_interval_max_sec: 2048

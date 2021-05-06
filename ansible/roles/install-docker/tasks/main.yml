@@ -1,0 +1,9 @@
+---
+
+- name: Install docker (Centos)
+  include_tasks: centos.yml
+  when: ansible_distribution == "CentOS"
+
+- name: Install docker (Ubuntu/Debian)
+  include_tasks: ubuntu-debian.yml
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"

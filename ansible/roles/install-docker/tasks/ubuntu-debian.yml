@@ -1,0 +1,102 @@
+---
+- name: Remove previous docker installation
+  package:
+    state: absent
+    name:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+
+- name: Add required packages
+  package:
+    state: present
+    update_cache: yes
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common
+
+- name: Work out the distribution
+  command: lsb_release -sc
+  register: lsb_release
+
+- name: Add apt key from url (Ubuntu)
+  apt_key:
+    url: "https://download.docker.com/linux/ubuntu/gpg"
+    state: present
+  when: ansible_distribution == "Ubuntu"
+
+- name: Add apt key from url (Debian)
+  apt_key:
+    url: "https://download.docker.com/linux/debian/gpg"
+    state: present
+  when: ansible_distribution == "Debian"
+
+- name: Add apt repository (Ubuntu)
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ lsb_release.stdout }} stable"
+    state: present
+    filename: "docker"
+  when: ansible_distribution == "Ubuntu"
+
+- name: Add apt repository (Debian)
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ release.stdout }} stable"
+    state: present
+    filename: "docker"
+  when: ansible_distribution == "Debian"
+
+- name: Install docker-ce
+  package:
+    state: latest
+    update_cache: yes
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+  when: docker_install_version == "latest"
+
+- name: Install docker-ce {{ docker_install_version }}
+  package:
+    state: present
+    update_cache: yes
+    name:
+      - "docker-ce={{ docker_install_version }}"
+      - "docker-ce-cli={{ docker_install_version }}"
+      - "containerd.io"
+  when: docker_install_version != "latest"
+
+- name: Setup /etc/docker/daemon.json file
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    force: yes
+
+- name: Start and enable docker daemon
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+# - name: Install pip for docker-compose
+#   package:
+#     state: latest
+#     name: python3-pip
+
+# - name: Install docker-compose from pip
+#   shell: pip3 install -U docker-compose
+
+- name: Install docker-compose
+  package:
+    state: latest
+    name:
+      - "docker-compose"
+
+- name: Restart docker
+  service:
+    name: docker
+    state: restarted

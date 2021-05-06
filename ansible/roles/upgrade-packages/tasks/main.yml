@@ -1,0 +1,6 @@
+---
+- name: Upgrade all packages
+  package:
+    name: "*"
+    update_cache: yes
+    state: latest

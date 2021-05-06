@@ -1,0 +1,34 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US
+  keyboard:
+    layout: en
+    variant: us
+  storage:
+    layout:
+      # name: lvm
+      name: direct
+  identity:
+    hostname: ubuntu
+    username: ubuntu
+    password: $6$rounds=4096$zpOxsVkHdw2DlQ8$N2yT0jglN3a32m51K9aGWa4XCLdRkcZrQancMCyd78iQIELdjmJB2WkrgZ0UmLBxLcek0HDDtS62IJpYOYDSn/
+  # apt:
+  #   preserve_sources_list: false
+  #   primary:
+  #     - arches: [i386, amd64]
+  #       uri: "http://tr.archive.ubuntu.com/ubuntu"
+  # packages:
+  #   - vim-nox
+  #   - curl
+  #   - net-tools
+  ssh:
+    install-server: yes
+    # authorized-keys:
+    #   - $key
+    allow-pw: yes
+  user-data:
+    disable_root: false
+  # late-commands:
+    # - 'sed -i "s/dhcp4: true/&\n      dhcp-identifier: mac/" /target/etc/netplan/00-installer-config.yaml'
+    # - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu

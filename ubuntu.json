@@ -1,102 +1,95 @@
 {
     "_comment": "Build with `packer build ubuntu.json`",
     "variables": {
-        "cpus": "1",
-        "disable_ipv6": "true",
-        "disk_size": "65536",
-        "headless": "true",
-        "hostname": "focal64",
-        "http_proxy": "{{env `http_proxy`}}",
-        "https_proxy": "{{env `https_proxy`}}",
-        "iso_checksum": "f11bda2f2caed8f420802b59f382c25160b114ccc665dbac9c5046e7fceaced2",
-        "iso_checksum_type": "sha256",
-        "iso_name": "ubuntu-20.04.1-legacy-server-amd64.iso",
-        "iso_path": "iso",
-        "iso_url": "http://cdimage.ubuntu.com/ubuntu-legacy-server/releases/20.04/release/ubuntu-20.04.1-legacy-server-amd64.iso",
-        "memory": "4096",
-        "no_proxy": "{{env `no_proxy`}}",
-        "preseed": "preseed.cfg",
-        "ssh_fullname": "vagrant",
-        "ssh_password": "vagrant",
-        "ssh_username": "vagrant",
-        "update": "true",
-        "vagrantfile_template": "",
+        "hostname": "ubuntu",
+        "ssh_username": "ubuntu",
+        "ssh_password": "ubuntu",
+
         "version": "0.1",
-        "virtualbox_guest_os_type": "Ubuntu_64",
-        "vm_name": "ubuntu-20.04"
+        "vm_name": "ubuntu-server-20.04.2"
     },
     "builders": [{
-        "boot_command": [
-            "<esc><esc><enter><wait>",
-            "/install/vmlinuz noapic",
-            " initrd=/install/initrd.gz",
-            " auto=true",
-            " priority=critical",
-            " hostname={{user `hostname`}}",
-            " passwd/user-fullname={{user `ssh_fullname`}}",
-            " passwd/username={{user `ssh_username`}}",
-            " passwd/user-password={{user `ssh_password`}}",
-            " passwd/user-password-again={{user `ssh_password`}}",
-            " preseed/url=http://{{.HTTPIP}}:{{.HTTPPort}}/{{user `preseed`}}",
-            " -- <enter>"
-        ],
-        "boot_wait": "5s",
-        "disk_size": "{{user `disk_size`}}",
-        "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
-        "guest_os_type": "{{user `virtualbox_guest_os_type`}}",
-        "hard_drive_interface": "sata",
-        "headless": "{{user `headless`}}",
-        "http_directory": "http",
-        "iso_checksum": "{{user `iso_checksum_type`}}:{{user `iso_checksum`}}",
-        "iso_urls": [
-            "{{user `iso_path`}}/{{user `iso_name`}}",
-            "{{user `iso_url`}}"
-        ],
-        "output_directory": "output-{{user `vm_name`}}-virtualbox-iso",
-        "shutdown_command": "echo '{{user `ssh_password`}}'|sudo -S shutdown -P now",
-        "ssh_password": "{{user `ssh_password`}}",
-        "ssh_username": "{{user `ssh_username`}}",
-        "ssh_timeout": "4h",
         "type": "virtualbox-iso",
+        "guest_os_type": "Ubuntu_64",
+        "output_directory": "output-{{user `vm_name`}}-vbox-iso",
+
+        "iso_urls": [
+            "iso/ubuntu-20.04.2-live-server-amd64.iso",
+            "http://releases.ubuntu.com/20.04.2/ubuntu-20.04.2-live-server-amd64.iso"
+        ],
+        "iso_checksum": "file:http://releases.ubuntu.com/20.04.2/SHA256SUMS",
+
         "vboxmanage": [
             ["modifyvm", "{{.Name}}", "--audio", "none"],
             ["modifyvm", "{{.Name}}", "--usb", "off"],
             ["modifyvm", "{{.Name}}", "--vram", "12"],
             ["modifyvm", "{{.Name}}", "--vrde", "off"],
             ["modifyvm", "{{.Name}}", "--nictype1", "virtio"],
-            ["modifyvm", "{{.Name}}", "--memory", "{{user `memory`}}"],
-            ["modifyvm", "{{.Name}}", "--cpus", "{{user `cpus`}}"]
+            ["modifyvm", "{{.Name}}", "--memory", "1024"],
+            ["modifyvm", "{{.Name}}", "--cpus", "1"]
         ],
+
         "virtualbox_version_file": ".vbox_version",
-        "vm_name": "{{user `vm_name`}}"
-    }],
-    "provisioners": [{
-        "environment_vars": [
-            "DEBIAN_FRONTEND=noninteractive",
-            "UPDATE={{user `update`}}",
-            "DISABLE_IPV6={{user `disable_ipv6`}}",
-            "SSH_USERNAME={{user `ssh_username`}}",
-            "SSH_PASSWORD={{user `ssh_password`}}",
-            "http_proxy={{user `http_proxy`}}",
-            "https_proxy={{user `https_proxy`}}",
-            "no_proxy={{user `no_proxy`}}"
+        "vm_name": "{{user `vm_name`}}",
+        "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+        "disk_size": "20000",
+        "hard_drive_interface": "sata",
+        "headless": "true",
+
+        "boot_command": [
+            "<enter><enter><f6><esc><wait> ",
+            "autoinstall ds=nocloud-net;seedfrom=http://{{ .HTTPIP }}:{{ .HTTPPort }}/",
+            "<enter><wait>"
         ],
-        "execute_command": "echo '{{user `ssh_password`}}'|{{.Vars}} sudo -E -S bash '{{.Path}}'",
-        "expect_disconnect": true,
+
+        "boot_wait": "5s",
+        "http_directory": "http",
+
+        "ssh_username": "{{user `ssh_username`}}",
+        "ssh_password": "{{user `ssh_password`}}",
+        "ssh_timeout": "4h",
+
+        "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S shutdown -P now"
+    }],
+    "provisioners": [
+      {
+        "environment_vars": [
+          "DEBIAN_FRONTEND=noninteractive",
+          "UPDATE=true",
+          "SSH_USERNAME={{user `ssh_username`}}",
+          "SSH_PASSWORD={{user `ssh_password`}}"
+        ],
+        "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
         "scripts": [
-            "script/update.sh",
-            "script/vagrant.sh",
-            "script/virtualbox.sh",
-            "script/motd.sh",
-            "script/minimize.sh",
-            "script/cleanup.sh"
+          "script/update.sh",
+          "script/virtualbox.sh",
+          "script/minimize.sh"
         ],
         "type": "shell"
-    }],
-    "post-processors": [{
-        "keep_input_artifact": false,
-        "output": "box/{{.Provider}}/{{user `vm_name`}}-{{user `version`}}.box",
-        "type": "vagrant",
-        "vagrantfile_template": "{{user `vagrantfile_template`}}"
-    }]
+      },
+      {
+        "type": "ansible",
+        "playbook_file": "./ansible/playbook.yml",
+        "user": "{{user `ssh_username`}}",
+        "ansible_env_vars": [
+          "ANSIBLE_HOST_KEY_CHECKING=False",
+          "ANSIBLE_SSH_ARGS='-o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes'",
+          "ANSIBLE_NOCOWS=1"
+        ],
+        "keep_inventory_file": true,
+        "inventory_file_template": "{{ .HostAlias }} ansible_host={{ .Host }} ansible_user={{ .User }} ansible_port={{ .Port }} ansible_become_pass={{user `ssh_password`}}\n"
+      },
+      {
+        "environment_vars": [
+          "DEBIAN_FRONTEND=noninteractive",
+          "SSH_USERNAME={{user `ssh_username`}}",
+          "SSH_PASSWORD={{user `ssh_password`}}"
+        ],
+        "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
+        "scripts": [
+          "script/cleanup.sh"
+        ],
+        "type": "shell"
+      }
+    ]
 }

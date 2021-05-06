@@ -1,0 +1,33 @@
+#  This file is part of systemd.
+#
+#  systemd is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as published by
+#  the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+#
+# Entries in this file show the compile time defaults.
+# You can change settings by editing this file.
+# Defaults can be restored by simply deleting this file.
+#
+# See timesyncd.conf(5) for details.
+
+[Time]
+NTP={% for server in timedatectl_timeservers %}{{ server }}{{ " " if not loop.last else "" }}{% endfor %}
+
+FallbackNTP={% for server in timedatectl_timeservers_fallback %}{{ server }}{{ " " if not loop.last else "" }}{% endfor %}
+
+{% if timedatectl_root_distance_max_sec is defined %}
+RootDistanceMaxSec={{ timedatectl_root_distance_max_sec }}
+{% else %}
+#RootDistanceMaxSec=5
+{% endif %}
+{% if timedatectl_poll_interval_min_sec is defined %}
+PollIntervalMinSec={{ timedatectl_poll_interval_min_sec }}
+{% else %}
+#PollIntervalMinSec=32
+{% endif %}
+{% if timedatectl_poll_interval_max_sec is defined %}
+PollIntervalMaxSec={{ timedatectl_poll_interval_max_sec }}
+{% else %}
+#PollIntervalMaxSec=2048
+{% endif %}

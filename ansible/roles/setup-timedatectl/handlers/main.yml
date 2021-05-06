@@ -1,0 +1,5 @@
+---
+- name: Restart timedatectl
+  service:
+    name: systemd-timesyncd
+    state: restarted

@@ -1,0 +1,13 @@
+---
+ansible_python_interpreter: /usr/bin/python3
+
+# Docker install
+docker_use_overlay2: true
+# docker_registry_mirrors:
+#   - http://hostname.example.com:5000
+# docker_insecure_registries:
+#   - hostname.example.com:5000
+
+docker_log_driver_json_file: true
+docker_log_file_max_size: 50m
+docker_log_file_max_num: 10
