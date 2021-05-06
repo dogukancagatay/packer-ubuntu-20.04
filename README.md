@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 To create VirtualBox virtual machine.
 
 ```bash
-packer build -on-error=ask ubuntu.json
+packer build -on-error=ask ubuntu-vbox.json
 ```
 
 To create Hyper-V virtual machine. (Not updated probably won't work)
